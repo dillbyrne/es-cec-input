@@ -3,7 +3,7 @@ TV CEC remote control for Emulation Station (included in RetroPie)
 
 # Features
 
-* It will automatically map your retroarch keyboard config to the remote control buttons. ( See Supported Keyboard Key Below )
+* It will automatically map your retroarch keyboard config to the remote control buttons. ( See Supported Keyboard Keys Below )
 
 * It will not act on remote button presses when kodi or retroarch is running and will act as soon as ES returns or starts.
 
@@ -40,6 +40,27 @@ You must first create the uinput group
 Then add the pi user to the uinput group
 
 `sudo adduser pi uinput`
+
+
+# Testing before autostart
+To make sure it will work you should run the script
+as a non root user.
+
+First make the script executable (assuming your in the same directory as the file)
+
+`chmod u+x es-cec-input.py`
+
+then run it with
+
+`./es-cec-input.py`
+
+If you see no output then you can try your TV remote with the buttons
+in the Button section above. If it works then proceed to the next section
+
+If you see output it will exit and tell you the key which is unsupported and 
+a list of the supported keys.
+
+Ensure all your keys are supported and try again until you get no output.
 
 # Autostart on boot
 To start on boot, add to user's crontab. 
