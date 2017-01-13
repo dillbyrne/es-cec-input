@@ -29,8 +29,8 @@ START    <->        FAST FORWARD or BLUE
 SELECT   <->        REWIND OR YELLOW
 
 # Dependencies
-It depends on `python-uinput` package which contains the library and the udev rules at 
-`/etc/udev/rules.d/40-uinput.rules` and also the `cec-utils` package. 
+It depends on the `cec-utils` package and also the `python-uinput` package which contains the library and the udev rules at 
+`/etc/udev/rules.d/40-uinput.rules`. 
 
 # Run the code as a non root user
 You must first create the uinput group 
@@ -53,7 +53,7 @@ Add the line,
 
 # Supported Keyboard Keys
 
-As keys need to be mapped from retroarch.cfg supported keys to corresponding uinput keys not all the kesy are available. Most are supported, as seen below
+As keys need to be mapped from retroarch.cfg supported keys to corresponding uinput supported keys not all the keys are available. However most are supported, as seen below
 
 
 Letters ("a" to "z"), left, right, up, down, enter, kp_enter, tab, insert, del, end, home, rshift, shift, ctrl, alt, space, escape, kp_plus, kp_minus, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12,  num0, num1, num2, num3, num4, num5, num6, num7, num8, num9, pageup, pagedown, keypad0, keypad1, keypad2, keypad3, keypad4, keypad5, keypad6, keypad7, keypad8, keypad9, period, capslock, numlock, backspace, scroll_lock, backquote, pause, quote, comma, minus, slash, semicolon, equals, backslash, kp_period, kp_equals, rctrl, ralt
