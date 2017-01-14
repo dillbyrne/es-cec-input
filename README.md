@@ -84,7 +84,7 @@ To start on boot, add to user's crontab.
 
 Add the line,
 
-`@reboot hohup ./home/pi/PATH/TO/THE/SCRIPT/es-cec-input.py`
+`@reboot nohup ./home/pi/PATH/TO/THE/SCRIPT/es-cec-input.py`
 
 
 # Supported Keyboard Keys
