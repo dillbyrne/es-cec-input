@@ -31,7 +31,9 @@ SELECT   <->        REWIND OR YELLOW
 
 # Dependencies
 It depends on the `cec-utils` package and also the `python-uinput` package which contains the library and the udev rules at 
-`/etc/udev/rules.d/40-uinput.rules`. 
+`/etc/udev/rules.d/40-uinput.rules`.  
+
+Both `cec-utils` and `python-uinput` are in the repositories.
 
 The `40-uinput.rules` file should look like the following
 
