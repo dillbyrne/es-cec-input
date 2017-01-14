@@ -33,6 +33,14 @@ SELECT   <->        REWIND OR YELLOW
 It depends on the `cec-utils` package and also the `python-uinput` package which contains the library and the udev rules at 
 `/etc/udev/rules.d/40-uinput.rules`. 
 
+The `40-uinput.rules` file should look like the following
+
+```
+ACTION=="add|change", KERNEL=="event[0-9]*", ENV{ID_VENDOR_ID}=="012a", ENV{ID_MODEL_ID}=="034b",
+ENV{ID_INPUT_KEYBOARD}="1", ENV{ID_INPUT_TABLET}="1"SUBSYSTEM=="input", ATTRS{name}=="python-uinput",
+ENV{ID_INPUT_KEYBOARD}="1"KERNEL=="uinput", MODE:="0666" 
+```
+
 # Run the code as a non root user
 You must first create the uinput group 
 
@@ -44,6 +52,10 @@ Then add the pi user to the uinput group
 
 
 # Testing before autostart
+
+**Note: It was developed and tested on a pi3 with Retropie 4.1 with kodi installed in 
+the ports section of retropie**
+
 To make sure it will work you should run the script
 as a non root user.
 
