@@ -8,6 +8,7 @@ TV CEC remote control for Emulation Station (included in RetroPie)
 * It will not act on remote button presses when kodi or retroarch is running and will act as soon as ES returns or starts.
 
 
+
 # Buttons
 
 ES       <->         TV Remote
@@ -73,6 +74,8 @@ Add the line,
 
 
 # Supported Keyboard Keys
+
+**Note: You must set up your keyboard in Emulation Station first or the script will not work**
 
 As keys need to be mapped from retroarch.cfg supported keys to corresponding uinput supported keys not all the keys are available. However most are supported, as seen below
 
