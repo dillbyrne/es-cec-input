@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Name: es-cec-input.py
-# Version: 1.2
+# Version: 1.3
 # Description: cec remote control for emulation station in retropie
 # Author: dillbyrne
 # Homepage: https://github.com/dillbyrne/es-cec-input
@@ -86,15 +86,19 @@ def generate_keylist():
     keylist = []
     key_bindings = get_key_bindings('/opt/retropie/configs/all/retroarch.cfg')
     keymap = get_keymap()
-    
-    try:
-        for binding in key_bindings:
+    errors = []
+        
+    for binding in key_bindings:
+        
+        try:
             keylist.append(keymap[binding])
-    except KeyError as e:
-        print 'The %s key in your retroarch.cfg is unsupported by this script\n' % e
+        except KeyError as e:
+            errors.append(e)
+                
+    if (len(errors) > 0):        
+        print 'The %s keys in your retroarch.cfg are unsupported by this script\n' % ', '.join(map(str, errors))
         print 'Supported keys are:\n'
         print get_keymap().keys()
-        
         sys.exit()
 
     return keylist
@@ -111,9 +115,7 @@ def get_key_bindings(ra_cfg):
 
 def register_device(keylist):
 
-    device = uinput.Device(keylist)
-
-    return device
+    return uinput.Device(keylist)
 
 def press_keys(line,device,keylist):
     # ES keys            a,b,x,y,start,select,l,r,left,right,up,down,l2,r2,l3,r3
