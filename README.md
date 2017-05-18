@@ -1,5 +1,5 @@
 # es-cec-input
-TV CEC remote control for Emulation Station (included in RetroPie)
+TV CEC remote control support for Emulation Station (included in RetroPie)
 
 # Features
 
