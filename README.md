@@ -100,3 +100,4 @@ Letters ("a" to "z"), left, right, up, down, enter, kp_enter, tab, insert, del, 
 
 # FAQ
 * The script is not working after exiting from kodi. This is due to a setting in kodi. [Solution](https://github.com/dillbyrne/es-cec-input/issues/2#issuecomment-281341050)
+* Using remote is not controlling menu but signal is being received (goes out of screensaver). Happens when keyboard was not configured as a controller. [Solution](https://github.com/dillbyrne/es-cec-input/issues/1#issuecomment-272633575)
