@@ -25,6 +25,7 @@
 import subprocess
 import uinput
 import sys
+import time
 
 
 # map ES supported keys to python-uinput keys
@@ -168,9 +169,7 @@ def main():
     keylist = generate_keylist()
     device = register_device(keylist)
     
-    #use cec-client to track pressed buttons on remote
-    p = subprocess.Popen('cec-client', stdout=subprocess.PIPE, bufsize=1)
-    lines = iter(p.stdout.readline, b'')
+    idle = True
 
     while True:
 
@@ -179,13 +178,26 @@ def main():
 
         running_processes = subprocess.check_output(['ps', '-A'])
         
-        if running_processes.find('kodi.bin') == -1 and running_processes.find('retroarch') == -1:
+        if running_processes.find('kodi_v7.bin') == -1 and running_processes.find('retroarch') == -1:
+            if idle:
+                #start cec-client to track pressed buttons on remote
+                p = subprocess.Popen('cec-client', stdout=subprocess.PIPE, bufsize=1)
+                lines = iter(p.stdout.readline, b'')
+
+                idle = False
 
             press_keys(lines.next(), device, keylist)
         else:
-            # prevent lines from building up in buffer when not in ES
-            # as the commands would be applied when control returns to ES
-            lines.next()
+
+            # stop cec-client when not in ES
+
+            if not idle:
+                p.kill()
+                p.wait() # avoid zombies
+
+                idle = True
+
+            time.sleep(1)
 
 
 if __name__ == "__main__":
