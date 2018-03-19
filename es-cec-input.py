@@ -22,16 +22,27 @@ to start on boot, add to user crontab. crontab -e
 @reboot hohup ./home/pi/RetroPie/scripts/es-cec-input.py
 """
 
+# (remote control) es-cec -> game controller -> keyboard -> uinput
+# es-cec -> game controller: user defined
+# game controller -> keyboard: retroarch.cfg
+# keyboard -> uinput: static(es-cec-input)
+
 import subprocess
+import threading
 import uinput
+import os
 import sys
 import time
+import string
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty  # python 3.x
 
 
-def get_keymap():
+def get_keyboard_to_uinput_map():
     """Map ES supported keys to python-uinput keys"""
-
-    keymap = {
+    return {
             'left': uinput.KEY_LEFT, 'right': uinput.KEY_RIGHT,
             'up': uinput.KEY_UP, 'down': uinput.KEY_DOWN,
             'enter': uinput.KEY_ENTER, 'kp_enter': uinput.KEY_KPENTER,
@@ -78,25 +89,24 @@ def get_keymap():
             'y': uinput.KEY_Y, 'z': uinput.KEY_Z
             }
 
-    return keymap
 
-
-def generate_keylist():
-    """generate a list of keys we actually need
+def generate_controller_to_uinput_codes_map():
+    """generate a map of keys we actually need
     this will be stored in memory and will comprise of
     a,b,x,y,start,select,l,r,left,right,up,down,l2,r2,l3,r3
     keyboard corresponding values the user has chosen
     in the retroarch.cfg file"""
 
-    keylist = []
-    key_bindings = get_key_bindings('/opt/retropie/configs/all/retroarch.cfg')
-    keymap = get_keymap()
+    c_to_u = {}
+    controller_to_keyboard_bindings = get_key_bindings(
+        '/opt/retropie/configs/all/retroarch.cfg')
+    keyboard_to_uinput_mappings = get_keyboard_to_uinput_map()
     errors = []
 
-    for binding in key_bindings:
-
+    for controller_key in controller_to_keyboard_bindings:
+        keyboard_key = controller_to_keyboard_bindings[controller_key]
         try:
-            keylist.append(keymap[binding])
+            c_to_u[controller_key] = keyboard_to_uinput_mappings[keyboard_key]
         except KeyError as e:
             errors.append(e)
 
@@ -107,7 +117,7 @@ def generate_keylist():
         print get_keymap().keys()
         sys.exit()
 
-    return keylist
+    return c_to_u
 
 
 def get_key_bindings(ra_cfg):
@@ -115,105 +125,160 @@ def get_key_bindings(ra_cfg):
     returns the corresponding keys the user mapped
     in the retroarch.cfg file"""
 
-    keys = []
+    keys = {}
     with open(ra_cfg, 'r') as fp:
         for line in fp:
+<<<<<<< 9ea7e255376d2db0c22efcedfa097b5a640977fd
             if 'input_player1_' in line and '#' not in line and\
                     '_analog_dpad_mode' not in line:
                 keys.append(line.split('=')[1][2:-2])
+=======
+            if 'input_player1_' in line and '#' not in line:
+                splitted = line.split('=')
+                controller_key = splitted[0].split('_')[-1].strip()
+                keyboard_key = splitted[1][2:-2]
+                keys[controller_key] = keyboard_key
+
+    # KEYS :{'a': (1, 45), 'b': (1, 44), 'l': (1, 16), 'up': (1, 103),
+    # 'down': (1, 108), 'start': (1, 28), 'r': (1, 17), 'right': (1, 106),
+    # 'y': (1, 30), 'x': (1, 31), 'select': (1, 54), 'left': (1, 105)}
+>>>>>>> Several improvements and fixes:
     return keys
 
 
-def register_device(keylist):
+def get_remote_to_controller_bindings(es_cec_cfg):
+    """read cec to controller mappings from es-cec file.
+    returns the corresponding keys the user mapped in the es-cec.cfg file"""
 
-    return uinput.Device(keylist)
+    # Don't get confused by select key. Remote's select key should trigger
+    # 'A' button on game controller(Think it as an enter/ok/double click key).
+    # The select button on game controller is used for other stuff in es
+    cec_to_controller = {
+                         'rewind': 'select', 'yellow': 'select',
+                         'fast forward': 'start', 'blue': 'start', 'up': 'up',
+                         'left': 'left', 'right': 'right', 'down': 'down',
+                         'select': 'a', 'red': 'a', 'exit': 'b', 'green': 'b'}
+
+    if os.path.isfile(es_cec_cfg):
+        with open(es_cec_cfg, 'r') as fp:
+            for line in fp:
+                if '=' in line and '#' not in line:
+                    splitted = line.split('=')
+                    cec_code = splitted[0].strip()
+                    controller_key = splitted[1].strip()
+                    print "Overriding "+cec_code+" with "+controller_key
+                    cec_to_controller[cec_code] = controller_key
+    elif "es-cec.cfg" != es_cec_cfg:
+        print '[WARNING] %s does not exist, using defaults...' % es_cec_cfg
+
+    return cec_to_controller
 
 
-def press_keys(line, device, keylist):
+def get_cec_to_uinput_mapping(es_cec_cfg):
+    # TODO should we check $HOME/.emulationstation/es_input.cfg?
+    esmapping = get_remote_to_controller_bindings(es_cec_cfg)
+    keymapping = generate_controller_to_uinput_codes_map()
+
+    es_to_uinput = {}
+    errors = {}
+    for cec_key in esmapping:
+        try:
+            es_to_uinput[cec_key] = keymapping[esmapping[cec_key]]
+        except KeyError as e:
+            errors[cec_key] = esmapping[cec_key]
+
+    # {'blue': (1, 28), 'fast forward': (1, 28), 'right': (1, 106),
+    # 'up': (1, 103), 'yellow': (1, 54), 'down': (1, 108), 'exit': (1, 44),
+    # 'red': (1, 45), 'rewind': (1, 54), 'green': (1, 44), 'select': (1, 45),
+    # 'left': (1, 105)}
+
+    if errors:
+        print '[WARNING] The %s controller values in your %s are unsupported \
+                by this script. %s in your remote will not work\n' \
+              % (', '.join(map(str, errors.values())), es_cec_cfg,
+                 ', '.join(map(str, errors.keys())))
+
+    return es_to_uinput
+
+
+def register_device(uinput_codes):
+    return uinput.Device(uinput_codes)
+
+
+def press_key(line, device, cec_to_uinput):
     """Emulate keyboard presses when a mapped button on the remote control
     has been pressed.
 
     To navigate ES, only a,b,start,select,up,down,left,and right are required
+    x,y,l and r are optional
     """
 
     # check for key released as pressed was displaying duplicate
     # presses on the remote control used for development
 
-    if "released" in line:
+    for cec_key in cec_to_uinput:
+        # Maybe we can use a Trie (overkill?)
+        if cec_key in line:
+            device.emit_click(cec_to_uinput[cec_key])
+            break
 
-        # Select
-        if "rewind" in line or "yellow" in line:
-            device.emit_click(keylist[5])
+    # Uncomment the print statement below to display remote output
+    # print line
 
-        # Start
-        elif "Fast forward" in line or "blue" in line:
-            device.emit_click(keylist[4])
 
-        # Left on DPAD
-        elif "left" in line:
-            device.emit_click(keylist[8])
-
-        # Right on DPAD
-        elif "right" in line:
-            device.emit_click(keylist[9])
-
-        # Up on DPAD
-        elif "up" in line:
-            device.emit_click(keylist[10])
-
-        # Down on DPAD
-        elif "down" in line:
-            device.emit_click(keylist[11])
-
-        # A Button
-        elif "select" in line or "red" in line:
-            device.emit_click(keylist[0])
-
-        # B Button
-        elif "exit" in line or "green" in line:
-            device.emit_click(keylist[1])
-
-        # Uncomment the prinnt statement below to display remote output
-        # print line
+def enqueue_output(out, queue):
+    for line in iter(out.readline, b''):
+        if "pressed" in line and "current" in line:
+            queue.put(line.lower())
+    out.close()
 
 
 def main():
+    ON_POSIX = 'posix' in sys.builtin_module_names
 
-    keylist = generate_keylist()
-    device = register_device(keylist)
+    if len(sys.argv) > 1:
+        cfg_file = sys.argv[1]
+    else:
+        cfg_file = 'es-cec.cfg'
 
+    cecuinputmapping = get_cec_to_uinput_mapping(cfg_file)
+    device = register_device(cecuinputmapping.values())
+
+    q = Queue()
     idle = True
+    no_cec_on = ['kodi_v7.bin', 'retroarch', 'reicast', 'drastic']
+    no_cec_on_cmd = ['-C'+cmd for cmd in no_cec_on]
 
     while True:
-
         # only apply key presses when emulation station is running,
         # not in emulators or kodi
         # kodi has its own built in support already
-
-        running_processes = subprocess.check_output(['ps', '-A'])
-
-        if running_processes.find('kodi_v7.bin') == -1 and\
-                running_processes.find('retroarch') == -1 and\
-                running_processes.find('reicast') == -1 and\
-                running_processes.find('drastic') == -1:
-
+        try:
+            _ = subprocess.check_output(['ps']+no_cec_on_cmd)
+        except subprocess.CalledProcessError:
+            # no 'conflicting' process is present
             if idle:
 
                 # start cec-client to track pressed buttons on remote
+                # -d 16 process only debug messages (only lines we care about)
+                # https://github.com/Pulse-Eight/libcec/blob/ab6c13846af6d56f26a1632fcde070e9b9c481b4/include/cectypes.h#L812
                 p = subprocess.Popen(
-                        'cec-client', stdout=subprocess.PIPE, bufsize=1)
-                lines = iter(p.stdout.readline, b'')
-
+                        ['cec-client', '-d', '16'], stdout=subprocess.PIPE,
+                        bufsize=1, close_fds=ON_POSIX)
+                # https://stackoverflow.com/a/4896288
+                t = threading.Thread(target=enqueue_output, args=(p.stdout, q))
+                t.start()
                 idle = False
 
-            press_keys(lines.next(), device, keylist)
+            while not q.empty():
+                press_key(q.get(), device, cecuinputmapping)
+
         else:
-
             # stop cec-client when not in ES
-
             if not idle:
                 p.kill()
                 p.wait()  # avoid zombies
+                t.join()
 
                 idle = True
 

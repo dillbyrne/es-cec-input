@@ -1,0 +1,13 @@
+# Example es-cec-input configuration file
+
+# Known left: up, down, left, right, red, green, yellow, blue
+#            select, back, play, pause, rewind, fast forward
+
+# Known right: up, down, left, right, a, b, x, y, l, r, start, select
+
+# Uncomment to apply mapping
+#red = left
+#green = down
+#yellow = up
+#blue = right
+
