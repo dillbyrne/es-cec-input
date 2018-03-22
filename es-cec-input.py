@@ -114,7 +114,7 @@ def generate_controller_to_uinput_codes_map():
         print 'The %s keys in your retroarch.cfg are unsupported\
                 by this script\n' % ', '.join(map(str, errors))
         print 'Supported keys are:\n'
-        print get_keymap().keys()
+        print keyboard_to_uinput_mappings.keys()
         sys.exit()
 
     return c_to_u
