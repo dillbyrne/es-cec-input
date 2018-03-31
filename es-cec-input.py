@@ -2,7 +2,7 @@
 
 """
 Name: es-cec-input.py
-Version: 1.4
+Version: 1.5
 Description: cec remote control for emulation station in retropie
 Author: dillbyrne
 Homepage: https://github.com/dillbyrne/es-cec-input
@@ -118,7 +118,8 @@ def get_key_bindings(ra_cfg):
     keys = []
     with open(ra_cfg, 'r') as fp:
         for line in fp:
-            if 'input_player1_' in line and '#' not in line and '_analog_dpad_mode' not in line:
+            if 'input_player1_' in line and '#' not in line and\
+                    '_analog_dpad_mode' not in line:
                 keys.append(line.split('=')[1][2:-2])
     return keys
 
