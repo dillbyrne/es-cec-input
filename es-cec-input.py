@@ -128,12 +128,8 @@ def get_key_bindings(ra_cfg):
     keys = {}
     with open(ra_cfg, 'r') as fp:
         for line in fp:
-<<<<<<< 9ea7e255376d2db0c22efcedfa097b5a640977fd
             if 'input_player1_' in line and '#' not in line and\
                     '_analog_dpad_mode' not in line:
-                keys.append(line.split('=')[1][2:-2])
-=======
-            if 'input_player1_' in line and '#' not in line:
                 splitted = line.split('=')
                 controller_key = splitted[0].split('_')[-1].strip()
                 keyboard_key = splitted[1][2:-2]
@@ -142,7 +138,6 @@ def get_key_bindings(ra_cfg):
     # KEYS :{'a': (1, 45), 'b': (1, 44), 'l': (1, 16), 'up': (1, 103),
     # 'down': (1, 108), 'start': (1, 28), 'r': (1, 17), 'right': (1, 106),
     # 'y': (1, 30), 'x': (1, 31), 'select': (1, 54), 'left': (1, 105)}
->>>>>>> Several improvements and fixes:
     return keys
 
 
@@ -226,11 +221,35 @@ def press_key(line, device, cec_to_uinput):
     # print line
 
 
+EVENT_PRG_SWITCH = 'es-changed-to-back-front'
+EVENT_KEY = 'remote-control-key-pressed'
+
+
 def enqueue_output(out, queue):
     for line in iter(out.readline, b''):
         if "pressed" in line and "current" in line:
-            queue.put(line.lower())
+            queue.put({'type': EVENT_KEY, 'data': line.lower()})
     out.close()
+
+
+def check_processes(queue):
+    no_cec_on = ['kodi_v7.bin', 'retroarch', 'reicast', 'drastic']
+    no_cec_on_apps_cmd = ['ps']+['-C'+app for app in no_cec_on]
+    last_in_es = False
+    while True:
+        in_es = True
+        try:
+            _ = subprocess.check_output(no_cec_on_apps_cmd)
+            in_es = False
+        except subprocess.CalledProcessError:
+            # no 'conflicting' process is present
+            pass
+
+        if last_in_es != in_es:
+            queue.put({'type': EVENT_PRG_SWITCH, 'data': in_es})
+            last_in_es = in_es
+
+        time.sleep(3)
 
 
 def main():
@@ -245,44 +264,44 @@ def main():
     device = register_device(cecuinputmapping.values())
 
     q = Queue()
-    idle = True
-    no_cec_on = ['kodi_v7.bin', 'retroarch', 'reicast', 'drastic']
-    no_cec_on_cmd = ['-C'+cmd for cmd in no_cec_on]
+    cec_client_cmd = ['cec-client', '-d', '16']
+    pt = threading.Thread(target=check_processes, args=(q,))
+    pt.setDaemon(True)
+    pt.start()
 
     while True:
         # only apply key presses when emulation station is running,
         # not in emulators or kodi
         # kodi has its own built in support already
         try:
-            _ = subprocess.check_output(['ps']+no_cec_on_cmd)
-        except subprocess.CalledProcessError:
-            # no 'conflicting' process is present
-            if idle:
+            # Blocking wait, use q.get(True, 0.09)
+            # for *development* only (allows keyboard interrupt)
+            evt = q.get()
+            if evt['type'] == EVENT_KEY:
+                press_key(evt['data'], device, cecuinputmapping)
+            elif evt['type'] == EVENT_PRG_SWITCH:
+                if evt['data']:
+                    # ES is in foreground
 
-                # start cec-client to track pressed buttons on remote
-                # -d 16 process only debug messages (only lines we care about)
-                # https://github.com/Pulse-Eight/libcec/blob/ab6c13846af6d56f26a1632fcde070e9b9c481b4/include/cectypes.h#L812
-                p = subprocess.Popen(
-                        ['cec-client', '-d', '16'], stdout=subprocess.PIPE,
-                        bufsize=1, close_fds=ON_POSIX)
-                # https://stackoverflow.com/a/4896288
-                t = threading.Thread(target=enqueue_output, args=(p.stdout, q))
-                t.start()
-                idle = False
-
-            while not q.empty():
-                press_key(q.get(), device, cecuinputmapping)
-
-        else:
-            # stop cec-client when not in ES
-            if not idle:
-                p.kill()
-                p.wait()  # avoid zombies
-                t.join()
-
-                idle = True
-
-            time.sleep(1)
+                    # start cec-client to track pressed buttons on remote
+                    # -d 16 process only debug messages i.e. lines with keys
+                    # https://github.com/Pulse-Eight/libcec/blob/ab6c13846af6d56f26a1632fcde070e9b9c481b4/include/cectypes.h#L812
+                    p = subprocess.Popen(
+                            cec_client_cmd, stdout=subprocess.PIPE,
+                            bufsize=1, close_fds=ON_POSIX)
+                    # https://stackoverflow.com/a/4896288
+                    t = threading.Thread(target=enqueue_output,
+                                         args=(p.stdout, q))
+                    t.start()
+                else:
+                    # ES is in background
+                    p.kill()
+                    p.wait()  # avoid zombies
+                    t.join()
+            else:
+                pass
+        except Empty:
+            pass
 
 
 if __name__ == "__main__":
