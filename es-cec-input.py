@@ -89,7 +89,7 @@ def generate_keylist():
     in the retroarch.cfg file"""
 
     keylist = []
-    key_bindings = get_key_bindings('/opt/retropie/configs/all/retroarch.cfg')
+    key_bindings = get_key_bindings('/home/osmc/retropie/configs/all/retroarch.cfg')
     keymap = get_keymap()
     errors = []
 
@@ -192,7 +192,7 @@ def main():
 
         running_processes = subprocess.check_output(['ps', '-A'])
 
-        if running_processes.find('kodi_v7.bin') == -1 and\
+        if running_processes.find('kodi.bin') == -1 and\
                 running_processes.find('retroarch') == -1 and\
                 running_processes.find('reicast') == -1 and\
                 running_processes.find('drastic') == -1:
