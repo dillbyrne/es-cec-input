@@ -192,7 +192,7 @@ def main():
 
         running_processes = subprocess.check_output(['ps', '-A'])
 
-        if running_processes.find('kodi_v7.bin') == -1 and\
+        if running_processes.find('kodi') == -1 and\
                 running_processes.find('retroarch') == -1 and\
                 running_processes.find('reicast') == -1 and\
                 running_processes.find('drastic') == -1:
