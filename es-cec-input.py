@@ -2,9 +2,9 @@
 
 """
 Name: es-cec-input.py
-Version: 1.5
+Version: 1.5.1
 Description: cec remote control for emulation station in retropie
-Author: dillbyrne
+Author: dillbyrne (small fixes by MacGyverr)
 Homepage: https://github.com/dillbyrne/es-cec-input
 Licence: GPL3
 
@@ -19,7 +19,7 @@ sudo addgroup uinput
 sudo adduser pi uinput
 
 to start on boot, add to user crontab. crontab -e
-@reboot hohup ./home/pi/RetroPie/scripts/es-cec-input.py
+@reboot nohup ./home/pi/RetroPie/scripts/es-cec-input.py
 """
 
 import subprocess
@@ -193,12 +193,16 @@ def main():
         running_processes = subprocess.check_output(['ps', '-A'])
 
         if running_processes.find('kodi_v7.bin') == -1 and\
+                running_processes.find('kodi.bin') == -1 and\
+                running_processes.find('kodi-rbpi_v7') == -1 and\
                 running_processes.find('retroarch') == -1 and\
                 running_processes.find('reicast') == -1 and\
                 running_processes.find('drastic') == -1:
 
             if idle:
 
+                # start cec-client with "as" and exit to initialize some older TVs to send the remote presses
+				print subprocess.call("echo as | cec-client -s", shell=True)
                 # start cec-client to track pressed buttons on remote
                 p = subprocess.Popen(
                         'cec-client', stdout=subprocess.PIPE, bufsize=1)
