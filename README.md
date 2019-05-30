@@ -75,13 +75,13 @@ Then add the pi user to the uinput group
 
 # Testing before autostart
 
-**Note: It was developed and tested on a pi3 with Retropie 4.4.12 with kodi 18.2 installed in 
+**Note: It was tested on a pi3 with Retropie 4.4.12 with kodi 18.2 installed in 
 the ports section of retropie**
 
 To make sure it will work you should run the script
 as a non root user.
 
-First download the code and make the script executable (assuming your in the same directory as the file)
+First download the code and make the script executable (assuming you are in the same directory as the file)
 ```
 wget https://raw.githubusercontent.com/MacGyverr/es-cec-input/master/es-cec-input.py
 sudo chmod ugo+rwx es-cec-input.py
@@ -95,7 +95,7 @@ If you see no output then you can try your TV remote with the buttons
 in the Button section above. If it works then proceed to the next section
 
 If you see output it will exit and tell you the key which is unsupported and 
-a list of the supported keys.
+a list of the supported keys. (If you see a lot of unsupported keys filled with gibberish, then you likely didn't already have a keyboard configured in EmulationStation as mentioned twice above)
 
 Ensure all your keys are supported and try again until you get no output.
 
@@ -124,5 +124,5 @@ Letters ("a" to "z"), left, right, up, down, enter, kp_enter, tab, insert, del, 
 (where "kp_"# is for keypad keys)
 
 # FAQ
-* The script is not working after exiting from kodi. This is due to a setting in kodi. [Solution](https://github.com/dillbyrne/es-cec-input/issues/2#issuecomment-281341050) (tested fine without but who knows)
+* If the script is not working after exiting from kodi. This is due to a setting in kodi. [Solution](https://github.com/dillbyrne/es-cec-input/issues/2#issuecomment-281341050) (tested fine without but who knows)
 * Using remote is not controlling menu but signal is being received (goes out of screensaver). Happens when keyboard was not configured as a controller. [Solution](https://github.com/dillbyrne/es-cec-input/issues/1#issuecomment-272633575)
