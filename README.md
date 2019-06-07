@@ -30,10 +30,25 @@ START    <->        FAST FORWARD or BLUE
 SELECT   <->        REWIND OR YELLOW
 
 # Dependencies
+
+**Note: You must setup a keyboard through the Emulationstation GUI prior to doing any of the below!**
+
 It depends on the `cec-utils` package and also the `python-uinput` package which contains the library and the udev rules at 
 `/etc/udev/rules.d/40-uinput.rules`.  
 
 Both `cec-utils` and `python-uinput` are in the repositories.
+and can be installed with:
+```
+sudo pip install python-uinput
+sudo apt-get install cec-utils
+```
+
+if python-uinput gives you a `bist-wheel` error, then do the following:
+```
+sudo pip uninstall python-uinput
+sudo pip install wheel
+sudo pip install python-uinput
+```
 
 The `40-uinput.rules` file should look like the following
 
@@ -42,8 +57,13 @@ ACTION=="add|change", KERNEL=="event[0-9]*", ENV{ID_VENDOR_ID}=="012a", ENV{ID_M
 ENV{ID_INPUT_KEYBOARD}="1", ENV{ID_INPUT_TABLET}="1"SUBSYSTEM=="input", ATTRS{name}=="python-uinput",
 ENV{ID_INPUT_KEYBOARD}="1"KERNEL=="uinput", MODE:="0666" 
 ```
+If not modify/create it with:
+```
+sudo nano /etc/udev/rules.d/40-uinput.rules
+```
+and add the code from above.
 
-# Run the code as a non root user
+# To run the code as a non root user
 You must first create the uinput group 
 
 `sudo addgroup uinput`
@@ -55,15 +75,17 @@ Then add the pi user to the uinput group
 
 # Testing before autostart
 
-**Note: It was developed and tested on a pi3 with Retropie 4.1 with kodi installed in 
+**Note: It was tested on a pi3 with Retropie 4.4.12 with kodi 18.2 installed in 
 the ports section of retropie**
 
 To make sure it will work you should run the script
 as a non root user.
 
-First make the script executable (assuming your in the same directory as the file)
-
-`chmod u+x es-cec-input.py`
+First download the code and make the script executable (assuming you are in the same directory as the file)
+```
+wget https://raw.githubusercontent.com/MacGyverr/es-cec-input/master/es-cec-input.py
+sudo chmod ugo+rwx es-cec-input.py
+```
 
 then run it with
 
@@ -73,18 +95,21 @@ If you see no output then you can try your TV remote with the buttons
 in the Button section above. If it works then proceed to the next section
 
 If you see output it will exit and tell you the key which is unsupported and 
-a list of the supported keys.
+a list of the supported keys. (If you see a lot of unsupported keys filled with gibberish, then you likely didn't already have a keyboard configured in EmulationStation as mentioned twice above)
 
 Ensure all your keys are supported and try again until you get no output.
 
 # Autostart on boot
-To start on boot, add to user's crontab. 
+To start on boot, add to user's crontab. (notice it's not using sudo)
 
 `crontab -e`
 
 Add the line,
 
 `@reboot nohup /home/pi/PATH/TO/THE/SCRIPT/es-cec-input.py`
+which if you didn't switch to a different folder before downloading the script will be /home/pi/, so use the following:
+
+`@reboot nohup /home/pi/es-cec-input.py`
 
 
 # Supported Keyboard Keys
@@ -99,5 +124,5 @@ Letters ("a" to "z"), left, right, up, down, enter, kp_enter, tab, insert, del, 
 (where "kp_"# is for keypad keys)
 
 # FAQ
-* The script is not working after exiting from kodi. This is due to a setting in kodi. [Solution](https://github.com/dillbyrne/es-cec-input/issues/2#issuecomment-281341050)
+* If the script is not working after exiting from kodi. This is due to a setting in kodi. [Solution](https://github.com/dillbyrne/es-cec-input/issues/2#issuecomment-281341050) (tested fine without but who knows)
 * Using remote is not controlling menu but signal is being received (goes out of screensaver). Happens when keyboard was not configured as a controller. [Solution](https://github.com/dillbyrne/es-cec-input/issues/1#issuecomment-272633575)
